@@ -1,11 +1,11 @@
 import { Header } from "~/components/header";
-
-export default function MktLayout({ children }: { children: React.ReactNode }) {
+import { Outlet } from "@remix-run/react";
+export default function ShopLayout() {
   return (
     <>
       <main>
         <Header />
-        {children}
+        <Outlet />
       </main>
     </>
   );
