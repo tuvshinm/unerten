@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.cinzel-400 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.cinzel-500 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+.cinzel-600 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+.cinzel-700 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+.cinzel-800 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+.cinzel-900 {
+  font-family: "Cinzel", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+}
