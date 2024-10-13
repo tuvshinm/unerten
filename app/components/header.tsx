@@ -15,7 +15,7 @@ export const Header = () => {
     console.log(language);
   }, [language]);
   return (
-    <div className="h-10 flex justify-between items-center flex-row px-52 py-16 border-b-[1px] border-black">
+    <div className="h-10 flex justify-between items-center flex-row px-52 py-16 border-b-[1px] border-black gap-2">
       <div className="w-1/2 flex flex-row justify-evenly">
         <div onClick={setLang} className="cursor-pointer select-none">
           {language ? "english" : "монгол"}
