@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import {
   Links,
   Meta,
@@ -6,7 +7,6 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
-
 export default function App() {
   return (
     <html lang="en">
