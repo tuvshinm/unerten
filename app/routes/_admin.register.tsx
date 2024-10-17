@@ -1,7 +1,7 @@
 import { Form } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { mongodb } from "~/utils/db.server";
+import { passwordSalt } from "~/utils/passwordsalter";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -9,10 +9,16 @@ export async function action({ request }: ActionFunctionArgs) {
     email: formData.get("email"),
     password: formData.get("password"),
   };
+  const sR = 12;
+  const hashed = passwordSalt(sR, user.password);
+  const hashedUser = {
+    email: user.email,
+    password: hashed,
+  };
   const db = await mongodb.db("unerten");
   const collection = await db.collection("user");
-  const result = await collection.insertOne(user);
-  return redirect(`/movies/${result.insertedId}`);
+  const result = await collection.insertOne(hashedUser);
+  console.log("hashed" + hashed);
 }
 export default function Register() {
   return (

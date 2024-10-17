@@ -38,23 +38,9 @@ export default function () {
                     <div className="text flex flex-col justify-center items-center">
                       <h1 className="text-2xl">{v.brand}</h1>
                       <h1 className="text-4xl">{v.name}</h1>
-                      <h1 className="text-2xl">{v.price}$</h1>
-                      <div className="flex flex-row gap-5">
-                        <button>Add to Cart</button>
-                        <button>Buy now</button>
-                      </div>
+                      <h1 className="text-2xl">{v.price}₮</h1>
                     </div>
                   </div>
-                </div>
-              );
-            } else {
-              return (
-                <div className="flex justify-center items-center bg-slate-200">
-                  <img
-                    key={index}
-                    src="./spinning-skull.gif"
-                    className="h-auto w-auto"
-                  />
                 </div>
               );
             }
