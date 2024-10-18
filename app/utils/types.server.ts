@@ -1,15 +1,15 @@
-import type { WithId, Document } from "mongodb";
+import type { WithId, Document, ObjectId } from "mongodb";
 
-export interface Fragrance extends WithId<Document> {
+export interface Brand extends WithId<Document> {
   brand: string;
+}
+export interface Fragrance extends WithId<Document> {
+  brand: ObjectId | string;
   name: string;
   price: number;
-  stock: number;
   img: string;
 }
 export interface User extends WithId<Document> {
+  username: string;
   password: string;
-  email: string;
-  verified: boolean;
-  admin: boolean;
 }

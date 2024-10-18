@@ -30,20 +30,18 @@ export default function () {
       <div className="w-fit">
         <div className="grid grid-rows-4 grid-cols-4">
           {fakedata.map((v, index) => {
-            if (v.stock > 0) {
-              return (
-                <div key={index} className="container">
-                  <img src={v.image} className="image" />
-                  <div className="overlay">
-                    <div className="text flex flex-col justify-center items-center">
-                      <h1 className="text-2xl">{v.brand}</h1>
-                      <h1 className="text-4xl">{v.name}</h1>
-                      <h1 className="text-2xl">{v.price}₮</h1>
-                    </div>
+            return (
+              <div key={index} className="container">
+                <img src={v.image} className="image" />
+                <div className="overlay">
+                  <div className="text flex flex-col justify-center items-center">
+                    <h1 className="text-2xl">{v.brand}</h1>
+                    <h1 className="text-4xl">{v.name}</h1>
+                    <h1 className="text-2xl">{v.price}₮</h1>
                   </div>
                 </div>
-              );
-            }
+              </div>
+            );
           })}
         </div>
       </div>
