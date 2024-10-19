@@ -2,6 +2,7 @@ import { mongodb } from "~/utils/db.server";
 import bcrypt from "bcrypt";
 import { json } from "@remix-run/node";
 import { Brand, Fragrance, User } from "./types.server";
+import { ObjectId } from "mongodb";
 export async function findOrCreateUser(user: string, password: string) {
   const db = await mongodb.db("unerten");
   const collection = await db.collection("user");
@@ -52,12 +53,10 @@ export async function addFragrance(
     img: img,
   };
   const db = await mongodb.db("unerten");
-  const collection = await db.collection("user");
   const fragrences = await db.collection("fragrences");
-  const brandz = await db.collection("brands");
   const found = (await fragrences.findOne({ name: name })) as Fragrance;
   if (!found) {
-    await fragrences.insertOne(frag);
+    let fart = await fragrences.insertOne(frag);
     return null;
   } else {
     return found;
@@ -65,8 +64,6 @@ export async function addFragrance(
 }
 export async function addBrand(name: any): Promise<Brand | null> {
   const db = await mongodb.db("unerten");
-  const collection = await db.collection("user");
-  const fragrences = await db.collection("fragrences");
   const brandz = await db.collection("brands");
   const brandie = {
     name: name,
@@ -97,9 +94,7 @@ export async function getBrands(name: string) {
 }
 export async function getFragrences(name: string) {
   const db = await mongodb.db("unerten");
-  const collection = await db.collection("user");
   const fragrences = await db.collection("fragrences");
-  const brandz = await db.collection("brands");
   let frags = fragrences.find({}).toArray();
   let searchedFragrences: Fragrance[] = [];
   if (name) {
@@ -111,3 +106,18 @@ export async function getFragrences(name: string) {
   }
   return json({ frags, searchedFragrences });
 }
+export async function deleteFragrance(id: any) {
+  const db = await mongodb.db("unerten");
+  const fragrences = await db.collection("fragrences");
+  const deleteOne = await fragrences.deleteOne({ _id: new ObjectId(id) });
+  return deleteOne.acknowledged;
+}
+export async function deleteBrand(id: any) {
+  const db = await mongodb.db("unerten");
+  const brandz = await db.collection("brands");
+  const deleteOne = await brandz.deleteOne({
+    _id: new ObjectId(id),
+  });
+  return deleteOne.acknowledged;
+}
+export async function editFragrance(id: any) {}

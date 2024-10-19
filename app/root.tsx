@@ -16,6 +16,10 @@ export default function App() {
         <Links />
       </head>
       <body>
+        <script
+          src="https://upload-widget.cloudinary.com/latest/global/all.js"
+          type="text/javascript"
+        />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

@@ -1,5 +1,4 @@
 import cloudinary from "cloudinary";
-import { writeAsyncIterableToWritable } from "@remix-run/node";
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -7,21 +6,34 @@ cloudinary.v2.config({
   api_secret: process.env.API_SECRET,
 });
 
-async function uploadImage(data: any) {
-  const uploadPromise = new Promise(async (resolve, reject) => {
+async function uploadImage(data: AsyncIterable<Uint8Array>) {
+  return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.v2.uploader.upload_stream(
       { folder: "fragrances" },
       (error, result) => {
         if (error) {
           reject(error);
-          return;
+        } else {
+          resolve(result);
         }
-        resolve(result);
       }
     );
-    await writeAsyncIterableToWritable(data, uploadStream);
+
+    // Pass the stream data only once
+    writeAsyncIterableToWritable(data, uploadStream).catch(reject);
   });
-  return uploadPromise;
 }
 
+// This function will pipe the async iterable (stream) to the writable stream (uploadStream)
+async function writeAsyncIterableToWritable(
+  source: AsyncIterable<Uint8Array>,
+  writable: any
+) {
+  for await (const chunk of source) {
+    if (!writable.write(chunk)) {
+      await new Promise((resolve) => writable.once("drain", resolve));
+    }
+  }
+  writable.end();
+}
 export { uploadImage };
