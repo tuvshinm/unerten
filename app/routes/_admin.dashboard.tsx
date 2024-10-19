@@ -131,36 +131,6 @@ export default function Dashboard() {
   const { brands, searchedBrands, fragrances, searchedFragrances, env } =
     useLoaderData<LoaderData>();
   const [url, setUrl] = useState("");
-  function ifSearched() {
-    const [displayedFragrances, setDisplayedFragrances] = useState<
-      Fragrance[] | undefined
-    >(undefined);
-
-    useEffect(() => {
-      if (typeof window !== "undefined") {
-        const errorElement = document.getElementById("error");
-
-        if (!searchedFragrances) {
-          if (errorElement) {
-            errorElement.textContent = "";
-          }
-          setDisplayedFragrances(fragrances); // Update state
-        } else if (searchedFragrances.length === 0) {
-          if (errorElement) {
-            errorElement.textContent = "No fragrances by that name.";
-          }
-          setDisplayedFragrances(fragrances); // Update state
-        } else {
-          if (errorElement) {
-            errorElement.textContent = "";
-          }
-          setDisplayedFragrances(searchedFragrances); // Update state
-        }
-      }
-    }, []); // Empty dependency array to run this only once after mounting
-
-    return displayedFragrances;
-  }
 
   return (
     <div className="flex flex-row justify-evenly items-center w-screen h-screen">
@@ -249,7 +219,7 @@ export default function Dashboard() {
           <button type="submit">Search</button>
         </Form>
         <div id="error"></div>
-        {ifSearched().map((v, index) => (
+        {fragrances.map((v, index) => (
           <Form
             key={v._id.toString()}
             className="flex flex-row gap-2"
@@ -273,6 +243,31 @@ export default function Dashboard() {
             </div>
           </Form>
         ))}
+        <h1>searched fragrances:</h1>
+        {searchedFragrances.map((v, index) => (
+          <Form
+            key={v._id.toString()}
+            className="flex flex-row gap-2"
+            method="post"
+            action="/dashboard"
+          >
+            <img src={v.img} className="size-12" alt={v.name} />
+            <div className="flex flex-row justify-center items-center gap-3">
+              <h1 className="text-2xl">{v.brand}</h1>
+              <h1 className="text-2xl">{v.name}</h1>
+              <h1 className="text-2xl">{v.price}₮</h1>
+              <input name="fid" type="text" defaultValue={v._id} hidden />
+              <button
+                type="submit"
+                name="intent"
+                value={"deletePerfume"}
+                className="border-2 border-black px-2"
+              >
+                delete
+              </button>
+            </div>
+          </Form>
+        ))}{" "}
       </div>
       <script
         src="https://upload-widget.cloudinary.com/latest/global/all.js"
