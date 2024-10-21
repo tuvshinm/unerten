@@ -56,6 +56,8 @@
 .image {
   display: block;
   width: 100%;
+  min-width: 8vw;
+  min-height: 40vh;
   height: auto;
 }
 

@@ -120,4 +120,17 @@ export async function deleteBrand(id: any) {
   });
   return deleteOne.acknowledged;
 }
-export async function editFragrance(id: any) {}
+export async function editFragrance(id: any, newName: any, newPrice: any) {
+  const db = await mongodb.db("unerten");
+  const fragrences = await db.collection("fragrences");
+  const filter = { _id: new ObjectId(id) };
+  const updateDocument = {
+    $set: {
+      name: newName,
+      price: newPrice,
+    },
+  };
+  const updateOne = await fragrences.updateOne(filter, updateDocument);
+  console.log(updateOne);
+  return updateOne.modifiedCount;
+}

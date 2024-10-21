@@ -15,6 +15,7 @@ import {
   addFragrance,
   deleteBrand,
   deleteFragrance,
+  editFragrance,
 } from "~/utils/mongoUtils.server";
 import UploadWidget from "~/components/widget";
 import { useState } from "react";
@@ -88,31 +89,41 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 export async function action({ request }: ActionFunctionArgs) {
-  const formData = await request.formData();
-  const name = formData.get("name");
-  const price = formData.get("price");
-  const id = formData.get("fid");
-  const brand = formData.get("brand");
-  const img = formData.get("url");
-  const intent = formData.get("intent") as string;
-  if (intent === "logout") {
-    await authenticator.logout(request, { redirectTo: "/login" });
-  } else if (intent === "createPerfume") {
-    addFragrance(brand?.toString(), name, price, img);
-    console.log("worked");
+  let user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  if (user) {
+    const formData = await request.formData();
+    const name = formData.get("name");
+    const price = formData.get("price");
+    const id = formData.get("fid");
+    const brand = formData.get("brand");
+    const img = formData.get("url");
+    const intent = formData.get("intent") as string;
+    if (intent === "logout") {
+      await authenticator.logout(request, { redirectTo: "/login" });
+    } else if (intent === "createPerfume") {
+      addFragrance(brand?.toString(), name, price, img);
+      console.log("worked");
+      return null;
+    } else if (intent === "createBrand") {
+      const brandname = formData.get("brandname");
+      await addBrand(brandname);
+      return null;
+    } else if (intent === "deletePerfume") {
+      await deleteFragrance(id);
+      return null;
+    } else if (intent === "deleteBrand") {
+      await deleteBrand(id);
+      return null;
+    } else if (intent === "editFragrance") {
+      await editFragrance(id, name, price);
+      return null;
+    }
     return null;
-  } else if (intent === "createBrand") {
-    const brandname = formData.get("brandname");
-    await addBrand(brandname);
-    return null;
-  } else if (intent === "deletePerfume") {
-    await deleteFragrance(id);
-    return null;
-  } else if (intent === "deleteBrand") {
-    await deleteBrand(id);
+  } else {
     return null;
   }
-  return null;
 }
 interface LoaderData {
   brands: Brand[];
@@ -121,17 +132,144 @@ interface LoaderData {
   searchedFragrances: Fragrance[];
   env: any;
 }
-
-interface ActionData {
-  errorMsg?: string;
-  imgSource?: string;
-}
-
 export default function Dashboard() {
   const { brands, searchedBrands, fragrances, searchedFragrances, env } =
     useLoaderData<LoaderData>();
   const [url, setUrl] = useState("");
-
+  function ifSearch() {
+    if (searchedFragrances.length === 0) {
+      return (
+        <div className="overflow-scroll h-3/4 flex flex-col">
+          <h1>all fragrances</h1>
+          {fragrances.map((v) => (
+            <Form
+              key={v._id.toString()}
+              className="flex flex-row gap-1"
+              method="post"
+              action="/dashboard"
+            >
+              <img src={v.img} className="size-10" alt={v.name} />
+              <div className="flex flex-row justify-center items-center gap-3">
+                <h1>{v.brand}</h1>
+                <input name="name" type="text" defaultValue={v.name} />
+                <input name="price" type="number" defaultValue={v.price} />
+                <input name="fid" type="text" defaultValue={v._id} hidden />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value={"deletePerfume"}
+                    className="border-2 border-black px-2"
+                  >
+                    delete
+                  </button>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value={"editFragrance"}
+                    className="border-2 border-black px-2"
+                  >
+                    edit
+                  </button>
+                </div>
+              </div>
+            </Form>
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="overflow-scroll h-3/4 flex flex-col ">
+          <h1>searched fragrances:</h1>
+          {searchedFragrances.map((v) => (
+            <Form
+              key={v._id.toString()}
+              className="flex flex-row gap-1"
+              method="post"
+              action="/dashboard"
+            >
+              <img src={v.img} className="size-10" alt={v.name} />
+              <div className="flex flex-row justify-center items-center gap-3">
+                <h1>{v.brand}</h1>
+                <input name="name" type="text" defaultValue={v.name} />
+                <input name="price" type="number" defaultValue={v.price} />
+                <input name="fid" type="text" defaultValue={v._id} hidden />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value={"deletePerfume"}
+                    className="border-2 border-black px-2"
+                  >
+                    delete
+                  </button>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value={"editFragrance"}
+                    className="border-2 border-black px-2"
+                  >
+                    edit
+                  </button>
+                </div>
+              </div>
+            </Form>
+          ))}
+        </div>
+      );
+    }
+  }
+  function ifBrandSearch() {
+    if (searchedBrands.length === 0) {
+      return (
+        <div className="h-96 overflow-scroll ">
+          {brands.map((brand) => (
+            <Form
+              key={brand._id.toString()}
+              className="flex flex-row gap-2"
+              method="post"
+              action="/dashboard"
+            >
+              <h1>{brand.name}</h1>
+              <input name="fid" type="text" defaultValue={brand._id} hidden />
+              <button
+                type="submit"
+                name="intent"
+                value={"deleteBrand"}
+                className="border-2 border-black px-2"
+              >
+                X
+              </button>
+            </Form>
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="h-96 overflow-scroll ">
+          {searchedBrands.map((brand) => (
+            <Form
+              key={brand._id.toString()}
+              className="flex flex-row gap-2"
+              method="post"
+              action="/dashboard"
+            >
+              <h1>{brand.name}</h1>
+              <input name="fid" type="text" defaultValue={brand._id} hidden />
+              <button
+                type="submit"
+                name="intent"
+                value={"deleteBrand"}
+                className="border-2 border-black px-2"
+              >
+                X
+              </button>
+            </Form>
+          ))}
+        </div>
+      );
+    }
+  }
   return (
     <div className="flex flex-row justify-evenly items-center w-screen h-screen">
       <Form method="post" action="/dashboard">
@@ -188,127 +326,34 @@ export default function Dashboard() {
         <button type="submit" name="intent" value={"createBrand"}>
           create brand.
         </button>
-        <div className="flex flex-row gap-2">
-          <div className="h-96 overflow-scroll ">
-            {brands.map((brand) => (
-              <Form
-                key={brand._id.toString()}
-                className="flex flex-row gap-2"
-                method="post"
-                action="/dashboard"
-              >
-                <h1>{brand.name}</h1>
-                <input name="fid" type="text" defaultValue={brand._id} hidden />
-                <button
-                  type="submit"
-                  name="intent"
-                  value={"deleteBrand"}
-                  className="border-2 border-black px-2"
-                >
-                  X
-                </button>
-              </Form>
-            ))}
-          </div>
-          <div className="h-96 overflow-scroll ">
-            <Form>
-              <input
-                type="text"
-                name="brandSearch"
-                placeholder="Name of fragrance"
-                className="border-2 border-black"
-              />
-              <button type="submit">Search</button>
-            </Form>
-            {searchedBrands.map((brand) => (
-              <Form
-                key={brand._id.toString()}
-                className="flex flex-row gap-2"
-                method="post"
-                action="/dashboard"
-              >
-                <h1>{brand.name}</h1>
-                <input name="fid" type="text" defaultValue={brand._id} hidden />
-                <button
-                  type="submit"
-                  name="intent"
-                  value={"deleteBrand"}
-                  className="border-2 border-black px-2"
-                >
-                  X
-                </button>
-              </Form>
-            ))}
-          </div>
+        <div className="flex flex-col gap-2">
+          <Form>
+            <input
+              type="text"
+              name="brandSearch"
+              placeholder="Name of fragrance"
+              className="border-2 border-black"
+            />
+            <button type="submit">Search</button>
+          </Form>
+          {ifBrandSearch()}
         </div>
       </Form>
       <div>
-        <Form>
+        <Form className="gap-2">
           <input
             type="text"
             name="fragSearch"
             placeholder="Name of fragrance"
             className="border-2 border-black"
           />
-          <button type="submit">Search</button>
+          <button type="submit">Search&nbsp;</button>
+          <a href="/dashboard" className="border-2 border-black">
+            X
+          </a>
         </Form>
         <div id="error"></div>
-        <div className="flex flex-row gap-2 h-full">
-          <div className="overflow-scroll h-3/4 flex flex-col ">
-            <h1>searched fragrances:</h1>
-            {searchedFragrances.map((v) => (
-              <Form
-                key={v._id.toString()}
-                className="flex flex-row gap-2"
-                method="post"
-                action="/dashboard"
-              >
-                <img src={v.img} className="size-12" alt={v.name} />
-                <div className="flex flex-row justify-center items-center gap-3">
-                  <h1>{v.brand}</h1>
-                  <h1>{v.name}</h1>
-                  <h1>{v.price}₮</h1>
-                  <input name="fid" type="text" defaultValue={v._id} hidden />
-                  <button
-                    type="submit"
-                    name="intent"
-                    value={"deletePerfume"}
-                    className="border-2 border-black px-2"
-                  >
-                    delete
-                  </button>
-                </div>
-              </Form>
-            ))}
-          </div>
-          <div className="overflow-scroll h-3/4 flex flex-col">
-            <h1>all fragrances</h1>
-            {fragrances.map((v) => (
-              <Form
-                key={v._id.toString()}
-                className="flex flex-row gap-1"
-                method="post"
-                action="/dashboard"
-              >
-                <img src={v.img} className="size-10" alt={v.name} />
-                <div className="flex flex-row justify-center items-center gap-3">
-                  <h1>{v.brand}</h1>
-                  <h1>{v.name}</h1>
-                  <h1>{v.price}₮</h1>
-                  <input name="fid" type="text" defaultValue={v._id} hidden />
-                  <button
-                    type="submit"
-                    name="intent"
-                    value={"deletePerfume"}
-                    className="border-2 border-black px-2"
-                  >
-                    delete
-                  </button>
-                </div>
-              </Form>
-            ))}
-          </div>
-        </div>
+        <div className="flex flex-row gap-2 h-full">{ifSearch()}</div>
       </div>
       <script
         src="https://upload-widget.cloudinary.com/latest/global/all.js"
