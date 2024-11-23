@@ -6,8 +6,6 @@ import { ObjectId } from "mongodb";
 export async function findOrCreateUser(user: string, password: string) {
   const db = await mongodb.db("unerten");
   const collection = await db.collection("user");
-  const fragrences = await db.collection("fragrences");
-  const brandz = await db.collection("brands");
   let found: User = (await collection.findOne({ username: user })) as User;
   let hashish = {
     username: user,
@@ -27,8 +25,6 @@ export async function loginUser(
 ): Promise<User | null> {
   const db = await mongodb.db("unerten");
   const collection = await db.collection("user");
-  const fragrences = await db.collection("fragrences");
-  const brandz = await db.collection("brands");
   const found = (await collection.findOne({ username: user })) as User;
   if (!found) {
     return null;
@@ -44,21 +40,30 @@ export async function addFragrance(
   brand: any,
   name: any,
   price: any,
-  img: any
+  img: any,
+  volume: any,
+  desc: any,
+  gender: any // 0 is male 1 is womale 2 is unisex
 ): Promise<Fragrance | null> {
   const frag = {
     brand: brand,
     name: name,
     price: price,
     img: img,
+    volume: volume,
+    desc: desc,
+    gender: gender,
   };
-  const db = await mongodb.db("unerten");
-  const fragrences = await db.collection("fragrences");
+  const db = mongodb.db("unerten");
+  const fragrences = db.collection("fragrences");
+  console.log("message received.");
   const found = (await fragrences.findOne({ name: name })) as Fragrance;
   if (!found) {
-    let fart = await fragrences.insertOne(frag);
+    await fragrences.insertOne(frag);
+    console.log("such fragrence not found and added");
     return null;
   } else {
+    console.log("such fragrence found and was not added");
     return found;
   }
 }
@@ -78,8 +83,6 @@ export async function addBrand(name: any): Promise<Brand | null> {
 }
 export async function getBrands(name: string) {
   const db = await mongodb.db("unerten");
-  const collection = await db.collection("user");
-  const fragrences = await db.collection("fragrences");
   const brandz = await db.collection("brands");
   let brands = brandz.find({}).toArray();
   let searchedBrands: Brand[] = [];
@@ -133,4 +136,43 @@ export async function editFragrance(id: any, newName: any, newPrice: any) {
   const updateOne = await fragrences.updateOne(filter, updateDocument);
   console.log(updateOne);
   return updateOne.modifiedCount;
+}
+export async function AtoZBrands() {
+  const db = await mongodb.db("unerten");
+  const brandsCollection = db.collection<Brand>("brands");
+  let brands = await brandsCollection.find({}).toArray();
+  let aToc: Brand[] = [];
+  const aregex = new RegExp(/[a-c]/i);
+  let dToj: Brand[] = [];
+  const dregex = new RegExp(/[d-j]/i);
+  let kTon: Brand[] = [];
+  const kregex = new RegExp(/[k-n]/i);
+  let oTor: Brand[] = [];
+  const oregex = new RegExp(/[o-r]/i);
+  let sToz: Brand[] = [];
+  const sregex = new RegExp(/[s-z]/i);
+  let extra: Brand[] = [];
+  brands.map((v) => {
+    if (aregex.test(v.name.charAt(0)) === true) {
+      aToc.push(v);
+    } else if (dregex.test(v.name.charAt(0)) === true) {
+      dToj.push(v);
+    } else if (kregex.test(v.name.charAt(0)) === true) {
+      kTon.push(v);
+    } else if (oregex.test(v.name.charAt(0)) === true) {
+      oTor.push(v);
+    } else if (sregex.test(v.name.charAt(0)) === true) {
+      sToz.push(v);
+    } else {
+      extra.push(v);
+    }
+  });
+  return json({
+    aToc,
+    dToj,
+    kTon,
+    oTor,
+    sToz,
+    extra,
+  });
 }

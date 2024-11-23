@@ -7,10 +7,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const db = await mongodb.db("unerten");
   const fragrancesCollection = db.collection<Fragrance>("fragrences");
   const brandsCollection = db.collection<Brand>("brands");
-
   const url = new URL(request.url);
   const fragSearch = url.searchParams.get("fragSearch");
-  const brandSearch = url.searchParams.get("brandSearch");
+  const brand = url.searchParams.get("brand");
   let fragrances = await fragrancesCollection.find({}).limit(10).toArray();
   const populatedFragrances = await Promise.all(
     fragrances.map(async (fragrance) => {
@@ -23,13 +22,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       };
     })
   );
-
   // Perform fragrance search
   let searchedFragrances: Fragrance[] = [];
-  if (fragSearch) {
+  if (fragSearch && brand) {
     const searchRegex = new RegExp(fragSearch, "i");
     searchedFragrances = await fragrancesCollection
-      .find({ name: { $regex: searchRegex } })
+      .find({ name: { $regex: searchRegex }, brand: new ObjectId(id) })
       .limit(10)
       .toArray();
 
@@ -46,8 +44,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       })
     );
   }
-
-  // Fetch and search brands (if applicable)
   let brands = await brandsCollection.find({}).toArray();
   return json({
     brands,
@@ -61,12 +57,18 @@ interface LoaderData {
   searchedFragrances: Fragrance[];
 }
 export default function Shop() {
-  const { brands, fragrances, searchedFragrances } =
-    useLoaderData<LoaderData>();
+  const { fragrances, searchedFragrances } = useLoaderData<LoaderData>();
+  function fart() {
+    if (searchedFragrances.length > 0) {
+      return searchedFragrances;
+    } else {
+      return fragrances;
+    }
+  }
   return (
     <div className="w-fit">
       <div className="grid grid-rows-4 grid-cols-4">
-        {fragrances.map((v, index) => {
+        {fart().map((v, index) => {
           return (
             <div key={index} className="container">
               <img src={v.img} className="image" />

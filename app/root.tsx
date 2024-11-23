@@ -5,6 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import { Toaster } from "./components/ui/toaster";
 import type { LinksFunction } from "@remix-run/node";
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Outlet />
         <ScrollRestoration />
         <Scripts />
+        <Toaster />
       </body>
     </html>
   );
