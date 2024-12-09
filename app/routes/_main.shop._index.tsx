@@ -3,6 +3,7 @@ import { mongodb } from "~/utils/db.server";
 import { Brand, Fragrance } from "~/utils/types.server";
 import { ObjectId } from "mongodb";
 import { useLoaderData } from "@remix-run/react";
+import { Button } from "~/components/ui/button";
 export async function loader({ request }: LoaderFunctionArgs) {
   const db = await mongodb.db("unerten");
   const fragrancesCollection = db.collection<Fragrance>("fragrences");
@@ -18,20 +19,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
       return {
         ...fragrance,
-        brand: brand ? brand.name : null, // Here, brand is now a string
+        brand: brand ? brand.name : null,
       };
     })
   );
-  // Perform fragrance search
+  // search for the perfuems
   let searchedFragrances: Fragrance[] = [];
   if (fragSearch && brand) {
     const searchRegex = new RegExp(fragSearch, "i");
     searchedFragrances = await fragrancesCollection
       .find({ name: { $regex: searchRegex }, brand: new ObjectId(id) })
-      .limit(10)
+      .limit(12)
       .toArray();
 
-    // Populate brands for the searched fragrances
+    // populate em
     searchedFragrances = await Promise.all(
       searchedFragrances.map(async (fragrance) => {
         const brand = await brandsCollection.findOne({
@@ -65,24 +66,56 @@ export default function Shop() {
       return fragrances;
     }
   }
+  function number(num: number) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
   return (
-    <div className="w-fit">
-      <div className="grid grid-rows-4 grid-cols-4">
+    <div className="flex flex-col justify-center items-center w-full">
+      <div className="grid grid-cols-4 w-3/4">
         {fart().map((v, index) => {
           return (
-            <div key={index} className="container">
-              <img src={v.img} className="image" />
-              <div className="overlay">
-                <div className="text flex flex-col justify-center items-center">
-                  <h1 className="text-2xl">{v.brand}</h1>
-                  <h1 className="text-4xl">{v.name}</h1>
-                  <h1 className="text-2xl">{v.price}₮</h1>
-                </div>
+            <div
+              key={index}
+              className="flex flex-col items-center justify-center w-full p-2"
+            >
+              <div
+                className=" transition-all justify-center items-center relative"
+                onMouseOver={() => {
+                  document
+                    .getElementById(v._id + "_show")
+                    ?.classList.remove("hidden");
+                  document
+                    .getElementById(v._id + "_img")
+                    ?.classList.add("brightness-50");
+                }}
+                onMouseOut={() => {
+                  document
+                    .getElementById(v._id + "_show")
+                    ?.classList.add("hidden");
+                  document
+                    .getElementById(v._id + "_img")
+                    ?.classList.remove("brightness-50");
+                }}
+              >
+                <img
+                  src={v.img}
+                  id={v._id + "_img"}
+                  className="transition-all"
+                />
+                <Button
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden"
+                  id={v._id + "_show"}
+                >
+                  Detailed View.
+                </Button>
               </div>
+              <h1 className="text-2xl">{v.name}</h1>
+              <h1>{number(v.price)}₮</h1>
             </div>
           );
         })}
       </div>
+      <Button>View more?</Button>
     </div>
   );
 }

@@ -39,11 +39,12 @@ import { useToast } from "~/hooks/use-toast";
 import { Input } from "~/components/ui/input";
 import { Autocomplete, AutocompleteItem } from "@nextui-org/autocomplete";
 export async function loader({ request }: LoaderFunctionArgs) {
+  // No idea if this is secure.
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
   if (user) {
-    const db = await mongodb.db("unerten");
+    const db = mongodb.db("unerten");
     const fragrancesCollection = db.collection<Fragrance>("fragrences");
     const brandsCollection = db.collection<Brand>("brands");
     let fragrances = await fragrancesCollection.find({}).toArray();
@@ -73,12 +74,13 @@ export async function action({ request }: ActionFunctionArgs) {
   });
   if (user) {
     const formData = await request.formData();
+    // TODO: make this a single line, if possible.
     const name = formData.get("name");
     const price = formData.get("price");
     const id = formData.get("fid");
     const brand = formData.get("brand");
     const img = formData.get("url");
-    const volume = formData.get("volume");
+    const volume = formData.get("vol");
     const desc = formData.get("desc");
     const gender = formData.get("gender");
     const intent = formData.get("intent") as string;
@@ -97,19 +99,18 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     } else if (intent === "deletePerfume") {
       await deleteFragrance(id);
-      return null;
+      return json({ success: true, message: "Perfume deleted." });
     } else if (intent === "deleteBrand") {
       await deleteBrand(id);
-      return null;
+      return json({ success: true, message: "Brand deleted." });
     } else if (intent === "editFragrance") {
       await editFragrance(id, name, price);
-      return null;
+      return json({ success: true, message: "Perfume edited." });
     } else {
-      console.log("not anyhting");
-      return null;
+      return json({ success: false, message: "Unknown Intent." });
     }
   } else {
-    return null;
+    return json({ success: false, message: "Unauthorized" });
   }
 }
 interface LoaderData {
@@ -133,6 +134,7 @@ export default function Dashboard() {
   const [url, setUrl] = useState(
     "http://res.cloudinary.com/djo4oojlj/image/upload/v1730386221/n1ulg01maknzhhf8q1ny.jpg" //placeholder img
   );
+  const [editUrl, setEditUrl] = useState("");
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
@@ -157,8 +159,8 @@ export default function Dashboard() {
             <img src={v.img} className="size-10" alt={v.name} />
             <div className="flex flex-row justify-center items-center gap-3">
               <h1>{v.brand}</h1>
-              <input name="name" type="text" defaultValue={v.name} />
-              <input name="price" type="number" defaultValue={v.price} />
+              <h1>{v.name}</h1>
+              <h1>{v.price}</h1>
               <input name="fid" type="text" defaultValue={v._id} hidden />
               <div className="flex flex-col gap-2">
                 <button
@@ -169,14 +171,220 @@ export default function Dashboard() {
                 >
                   delete
                 </button>
-                <button
-                  type="submit"
-                  name="intent"
-                  value={"editFragrance"}
-                  className="border-2 border-black px-2"
-                >
-                  edit
-                </button>
+                <Dialog modal={false}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">Edit</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit the fragrance</DialogTitle>
+                      <DialogDescription>edit it.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="brand" className="text-right">
+                          brand name
+                        </Label>
+                        <Autocomplete
+                          className="w-52  rounded-lg"
+                          defaultInputValue={v.brand}
+                        >
+                          {brands.map((v) => {
+                            return (
+                              <AutocompleteItem
+                                key={v._id}
+                                value={v._id}
+                                className="bg-white gap-0 border-2 border-black"
+                                onClick={() => {
+                                  setBrand(v._id);
+                                }}
+                              >
+                                {v.name}
+                              </AutocompleteItem>
+                            );
+                          })}
+                        </Autocomplete>
+                      </div>
+                      <div className="flex flex-col justify-center items-center gap-4 ">
+                        <div className="flex flex-row justify-center items-center">
+                          <div>
+                            <Label htmlFor="name" className="text-right">
+                              name
+                            </Label>
+                            <Input
+                              className="col-span-3"
+                              defaultValue={v.name}
+                              onChange={(e) => {
+                                setName(e.target.value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="price" className="text-right">
+                              price
+                            </Label>
+                            <Input
+                              id="price"
+                              name="price"
+                              className="col-span-3"
+                              type="number"
+                              defaultValue={v.price}
+                              onChange={(e) => {
+                                setPrice(e.target.value);
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-row justify-center items-center gap-2">
+                          <UploadWidget
+                            onUpload={(error, result) => {
+                              setEditUrl(result.info.url);
+                              console.log(result);
+                            }}
+                            env={env}
+                          >
+                            {({ open }) => (
+                              <button
+                                onClick={open}
+                                className=" bg-blue-500 text-white rounded-lg p-2"
+                                id="img"
+                              >
+                                Upload an Image
+                              </button>
+                            )}
+                          </UploadWidget>
+                          <img
+                            src={editUrl}
+                            className="w-12 h-12 hover:w-24 hover:h-24 transition-all duration-150"
+                          />
+                        </div>
+
+                        <Textarea
+                          className="w-full"
+                          rows={4}
+                          placeholder="Description Here."
+                          required
+                          defaultValue={v.description}
+                          onChange={(e) => {
+                            setDesc(e.target.value);
+                          }}
+                          aria-label="description"
+                        />
+                        <div className="flex flex-row justify-center items-center">
+                          <Select
+                            name="gender"
+                            onValueChange={(e) => {
+                              setGender(e);
+                            }}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select a gender." />
+                            </SelectTrigger>
+                            <SelectContent defaultValue={v.gender}>
+                              <SelectGroup>
+                                <SelectItem value="0">masculine</SelectItem>
+                                <SelectItem value="1">feminine</SelectItem>
+                                <SelectItem value="2">unisex</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <div>
+                            <Input
+                              id="volume"
+                              name="volume"
+                              className="col-span-3"
+                              type="number"
+                              placeholder="volume of bottle in ml"
+                              required
+                              defaultValue={v.volume}
+                              onChange={(e) => {
+                                setVol(e.target.value);
+                              }}
+                              aria-label="volume of perfume"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Form
+                        method="post"
+                        action="/dashboard"
+                        encType="multipart/form-data"
+                        id="upload-form"
+                      >
+                        <input
+                          type="text"
+                          name="url"
+                          hidden
+                          id="url"
+                          value={url}
+                          readOnly
+                        />
+                        <input
+                          type="text"
+                          name="brand"
+                          hidden
+                          id="brand"
+                          value={brand}
+                          readOnly
+                        />
+                        <input
+                          type="text"
+                          name="name"
+                          hidden
+                          id="name"
+                          value={name}
+                          readOnly
+                        />
+                        <input
+                          type="text"
+                          name="gender"
+                          hidden
+                          id="gender"
+                          value={gender}
+                          readOnly
+                        />
+                        <input
+                          type="number"
+                          name="price"
+                          hidden
+                          id="price"
+                          value={price}
+                          readOnly
+                        />
+                        <input
+                          type="text"
+                          name="desc"
+                          hidden
+                          id="desc"
+                          value={desc}
+                          readOnly
+                        />
+                        <input
+                          type="number"
+                          name="vol"
+                          hidden
+                          id="vol"
+                          value={vol}
+                          readOnly
+                        />
+                        <button
+                          type="submit"
+                          name="intent"
+                          value={"createPerfume"}
+                          onClick={() => {
+                            toast({
+                              description: "Fragrance edited.",
+                            });
+                          }}
+                        >
+                          Save changes
+                        </button>
+                      </Form>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </Form>
@@ -512,7 +720,7 @@ export default function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog>
+      <Dialog modal={false}>
         <DialogTrigger asChild>
           <Button variant="outline">edit fragrances</Button>
         </DialogTrigger>
